@@ -21,3 +21,31 @@ def login_function(username, password, filename="users.txt"):
     except FileNotFoundError:
         return False
     return False
+
+
+def choice_function():
+    choice = input("Выберите действие: 1 - регистрация, 2 - вход: ")
+    if choice == "1":
+        while True:
+            username = input("Введите username: ")
+            password = input("Введите password: ")
+            if register(username, password):
+                print("Регистрация успешна")
+                break
+            else:
+                print("Пользователь уже существует")
+    elif choice == "2":
+        while True:
+            username = input("Введите username: ")
+            password = input("Введите password: ")
+            if login_function(username, password):
+                print("Вход успешен")
+                break
+            else:
+                print("Неверный логин или пароль")
+    else:
+        print("Неверный выбор")
+
+
+if __name__ == "__main__":
+    choice_function()
