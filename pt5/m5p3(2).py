@@ -18,6 +18,7 @@ class Warrior:
     def defend(self):
         print(f"{self.name} защищается!")
 
+    #считаю, что по правилам игр, если оба соперника не атакуют, то выносливость должна все же пополняться
     def recover_stamina(self):
         self.stamina += 15
         print(f"{self.name} восстанавливает 15 выносливости")
