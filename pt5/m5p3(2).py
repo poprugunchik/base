@@ -1,107 +1,96 @@
 import random
 
-
 class Warrior:
     def __init__(self, name):
         self.name = name
-        self.health = 100
-        self.armor = 50
-        self.stamina = 100
+        self._health = 100
+        self._armor = 50
+        self._stamina = 100
+
+    @property
+    def health(self):
+        return self._health
+
+    @property
+    def armor(self):
+        return self._armor
+
+    @property
+    def stamina(self):
+        return self._stamina
 
     def is_alive(self):
-        return self.health > 0
+        return self._health > 0
+
+    def spend_stamina(self, amount):
+        self._stamina = max(0, self._stamina - amount)
+
+    def recover_stamina(self, amount=15):
+        self._stamina = min(100, self._stamina + amount)
+        print(f"{self.name} восстанавливает {amount} выносливости")
 
     def attack(self):
-        self.stamina -= 10
-        print(f"{self.name} атакует!")
+        if self._stamina < 10:
+            print(f"{self.name} слишком устал, чтобы атаковать!")
+            return 0  # ноль урона
+        self.spend_stamina(10)
+        damage = random.randint(10, 30)  # случайная сила удара
+        print(f"{self.name} готовит атаку на {damage} урона")
+        return damage
 
-    def defend(self):
-        print(f"{self.name} защищается!")
-
-    #считаю, что по правилам игр, если оба соперника не атакуют, то выносливость должна все же пополняться
-    def recover_stamina(self):
-        self.stamina += 15
-        print(f"{self.name} восстанавливает 15 выносливости")
-
-    def defend_from_attack(self):
-        if self.armor > 0:
-            health_loss = random.randint(0, 20)
-            armor_loss = random.randint(0, 10)
-            self.health -= health_loss
-            self.armor -= armor_loss
+    def take_damage(self, damage):
+        if self._armor > 0:
+            armor_loss = random.randint(0, min(self._armor, 10))
+            health_loss = max(damage - armor_loss, 0)
+            self._armor -= armor_loss
+            self._health -= health_loss
             print(f"{self.name} теряет {health_loss} здоровья и {armor_loss} брони")
         else:
-            health_loss = random.randint(10, 30)
-            self.health -= health_loss
-            print(f"Броня сломана! {self.name} теряет {health_loss} здоровья")
-
-    def take_full_damage(self):
-        damage = random.randint(10, 30)
-        self.health -= damage
-        print(f"{self.name} теряет {damage} здоровья")
-
-    def normalize(self):
-        self.health = max(0, self.health)
-        self.armor = max(0, self.armor)
-        self.stamina = max(0, self.stamina)
+            self._health -= damage
+            print(f"{self.name} теряет {damage} здоровья")
 
 
-warrior1 = Warrior("Геракл")
-warrior2 = Warrior("Зевс")
+        self._health = max(0, self._health)
+        self._armor = max(0, self._armor)
 
-round_num = 1
 
 def resolve_round(w1, w2):
-    action1 = random.choice(["attack", "defend"])
-    action2 = random.choice(["attack", "defend"])
+    action1 = random.choice(["attack", "rest"])
+    action2 = random.choice(["attack", "rest"])
 
     print(f"\n{w1.name} выбирает {action1}")
     print(f"{w2.name} выбирает {action2}")
 
-    # Оба атакуют
-    if action1 == "attack" and action2 == "attack":
-        w1.attack()
-        w2.attack()
-        w1.take_full_damage()
-        w2.take_full_damage()
-
-    elif action1 == "attack" and action2 == "defend":
-        w1.attack()
-        w2.defend()
-        w2.defend_from_attack()
-
-    elif action1 == "defend" and action2 == "attack":
-        w2.attack()
-        w1.defend()
-        w1.defend_from_attack()
-
-    else:
-        w1.defend()
-        w2.defend()
+    if action1 == "attack":
+        damage = w1.attack()
+        if action2 == "attack":
+            damage2 = w2.attack()
+            w1.take_damage(damage2)
+            w2.take_damage(damage)
+        else:  # w2 отдыхает
+            w2.take_damage(damage)
+            w2.recover_stamina()
+    else:  # w1 отдыхает
         w1.recover_stamina()
-        w2.recover_stamina()
+        if action2 == "attack":
+            damage2 = w2.attack()
+            w1.take_damage(damage2)
+        else:
+            w2.recover_stamina()
 
-    w1.normalize()
-    w2.normalize()
 
-
+# Создание воинов
 warrior1 = Warrior("Геракл")
 warrior2 = Warrior("Зевс")
 
 round_num = 1
-
 while warrior1.is_alive() and warrior2.is_alive():
     print(f"\n--- Раунд {round_num} ---")
     resolve_round(warrior1, warrior2)
-
     print(f"{warrior1.name}: HP={warrior1.health}, Armor={warrior1.armor}, Stamina={warrior1.stamina}")
     print(f"{warrior2.name}: HP={warrior2.health}, Armor={warrior2.armor}, Stamina={warrior2.stamina}")
-
     round_num += 1
 
-
 print("\n--- Конец боя ---")
-if warrior1.is_alive():
-    print(f"Победил {warrior1.name}")
-else:
-    print(f"Победил {warrior2.name}")
+winner = warrior1 if warrior1.is_alive() else warrior2
+print(f"Победил {winner.name}")
